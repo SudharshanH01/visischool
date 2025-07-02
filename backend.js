@@ -37,11 +37,16 @@ async function sendEmail(emails, subject, text, imageData, gmail, gmailAppPasswo
     to: emails.filter(Boolean).join(','),
     subject,
     text,
-    attachments: imageData
-      ? [{ filename: 'selfie.png', content: Buffer.from(imageData.split(',')[1], 'base64') }]
-      : [],
+    attachments: imageData || [],
   };
-  await transporter.sendMail(mailOptions);
+  console.log('Sending email with options:', mailOptions);
+  try {
+    let info = await transporter.sendMail(mailOptions);
+    console.log('Email sent!', info);
+  } catch (e) {
+    console.error('Nodemailer error:', e);
+    throw e;
+  }
 }
 
 // --- CONFIG STORAGE ---
