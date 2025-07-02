@@ -6,6 +6,12 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// --- CONFIG STORAGE ---
+const CONFIG_PATH = path.join(__dirname, 'admin-config.json');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -39,8 +45,6 @@ async function sendEmail(emails, subject, text, imageData, gmail, gmailAppPasswo
 }
 
 // --- CONFIG STORAGE ---
-const CONFIG_PATH = path.join(__dirname, 'admin-config.json');
-
 function loadConfig() {
   try {
     return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
@@ -91,8 +95,6 @@ app.post('/api/submit', async (req, res) => {
 });
 
 // Serve frontend (dist) for Render deployment
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 app.use(express.static(path.join(__dirname, 'dist')));
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
