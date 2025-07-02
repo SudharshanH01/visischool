@@ -71,8 +71,19 @@ app.post('/api/submit', async (req, res) => {
   // Use backend config if not provided in request
   let config = req.body.config;
   if (!config) config = loadConfig();
-  const { whomToMeet, appointment, purpose, selfie, childName, grade, contact, parentName, activeTab } = req.body;
-  const msg = `Meeting: Whom to meet: ${whomToMeet}, Appointment: ${appointment}, Purpose: ${purpose}\nParent Pickup: Child: ${childName}, Grade: ${grade}, Contact: ${contact}, Name: ${parentName}`;
+  const { whomToMeet, appointment, purpose, selfie, childName, grade, contact, parentName, relationship, activeTab } = req.body;
+
+  // Compose subject and message body based on form type
+  let subject = '';
+  let msg = '';
+  if (activeTab === 'pickup') {
+    subject = 'Parent pickup request';
+    msg = `Parent Pickup Request\nChild: ${childName}\nGrade: ${grade}\nRelationship: ${relationship}\nParent Name: ${parentName}\nContact: ${contact}`;
+  } else {
+    subject = 'Meeting request';
+    msg = `Meeting Request\nWhom to meet: ${whomToMeet}\nAppointment: ${appointment}\nPurpose: ${purpose}`;
+  }
+
   try {
     sendWhatsApp(config.whatsappNumbers, msg);
     let emailRecipients = config.emails;
@@ -80,11 +91,18 @@ app.post('/api/submit', async (req, res) => {
       // For parent pickup, send to both default and parent pickup emails
       emailRecipients = [...(config.emails || []), ...(config.parentPickupEmails || [])];
     }
+    // Fix: send selfie as jpg for better compatibility
+    let selfieAttachment = null;
+    if (selfie && selfie.startsWith('data:image/')) {
+      // Convert to jpg if possible
+      const base64 = selfie.split(',')[1];
+      selfieAttachment = [{ filename: 'selfie.jpg', content: Buffer.from(base64, 'base64') }];
+    }
     await sendEmail(
       emailRecipients,
-      'Visitor/Parent Form Submission',
+      subject,
       msg,
-      selfie,
+      selfieAttachment,
       config.gmail,
       config.gmailAppPassword
     );

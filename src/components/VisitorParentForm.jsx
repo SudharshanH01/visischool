@@ -9,6 +9,7 @@ const initialState = {
   grade: "",
   contact: "",
   parentName: "",
+  relationship: "",
 };
 
 export default function VisitorParentForm({ config, activeTab }) {
@@ -250,6 +251,17 @@ export default function VisitorParentForm({ config, activeTab }) {
                 required
                 style={fieldStyle}
                 placeholder="Enter contact number"
+              />
+            </label>
+            <label style={labelStyle}>
+              Relationship to child:
+              <input
+                name="relationship"
+                value={form.relationship}
+                onChange={handleChange}
+                required
+                style={fieldStyle}
+                placeholder="e.g. Father, Mother, Guardian"
               />
             </label>
             <label style={labelStyle}>
