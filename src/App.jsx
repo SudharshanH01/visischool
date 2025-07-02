@@ -22,20 +22,27 @@ function getWifiQR({ ssid, password, encryption }, pageUrl) {
 
 function App() {
   const [showAdmin, setShowAdmin] = useState(false);
-  const [config, setConfig] = useState(() => {
-    // Try to load config from localStorage
-    const saved = localStorage.getItem('adminConfig');
-    return saved ? JSON.parse(saved) : defaultConfig;
-  });
+  const [config, setConfig] = useState(defaultConfig);
+  // Load config from backend on mount
+  useEffect(() => {
+    fetch('/api/config')
+      .then(r => r.ok ? r.json() : defaultConfig)
+      .then(cfg => setConfig(cfg));
+  }, []);
+  // Save config to backend whenever it changes (admin only)
+  const saveConfigToBackend = (c) => {
+    setConfig(c);
+    fetch('/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(c),
+    });
+  };
+
   const [activeTab, setActiveTab] = useState('meeting');
   const [adminAuthed, setAdminAuthed] = useState(false);
   const wifiReady = config.wifi.ssid && config.wifi.password;
   const pageUrl = window.location.href;
-
-  // Save config to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('adminConfig', JSON.stringify(config));
-  }, [config]);
 
   return (
     <div style={{
@@ -94,10 +101,7 @@ function App() {
           ) : (
             <AdminPanel
               config={config}
-              setConfig={c => {
-                setConfig(c);
-                localStorage.setItem('adminConfig', JSON.stringify(c));
-              }}
+              setConfig={saveConfigToBackend}
               pageUrl={pageUrl}
             />
           )
