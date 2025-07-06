@@ -5,12 +5,31 @@ import nodemailer from 'nodemailer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import dotenv from 'dotenv';
+import { MongoClient } from 'mongodb';
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// --- CONFIG STORAGE ---
-const CONFIG_PATH = path.join(__dirname, 'admin-config.json');
+// --- CONFIG STORAGE (MongoDB) ---
+const MONGODB_URI = process.env.MONGODB_URI;
+const DB_NAME = 'visiskool';
+const COLLECTION = 'adminConfig';
+const client = new MongoClient(MONGODB_URI, { useUnifiedTopology: true });
+
+async function getConfig() {
+  await client.connect();
+  const db = client.db(DB_NAME);
+  const config = await db.collection(COLLECTION).findOne({});
+  return config || {};
+}
+async function setConfig(newConfig) {
+  await client.connect();
+  const db = client.db(DB_NAME);
+  await db.collection(COLLECTION).deleteMany({});
+  await db.collection(COLLECTION).insertOne(newConfig);
+}
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -49,33 +68,29 @@ async function sendEmail(emails, subject, text, imageData, gmail, gmailAppPasswo
   }
 }
 
-// --- CONFIG STORAGE ---
-function loadConfig() {
+// --- API to get/set config (MongoDB) ---
+app.get('/api/config', async (req, res) => {
   try {
-    return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
-  } catch {
-    return null;
+    const config = await getConfig();
+    if (config) return res.json(config);
+    res.status(404).json({ error: 'No config found' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to load config' });
   }
-}
-function saveConfig(config) {
-  fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2), 'utf8');
-}
-
-// --- API to get/set config ---
-app.get('/api/config', (req, res) => {
-  const config = loadConfig();
-  if (config) return res.json(config);
-  res.status(404).json({ error: 'No config found' });
 });
-app.post('/api/config', (req, res) => {
-  saveConfig(req.body);
-  res.json({ ok: true });
+app.post('/api/config', async (req, res) => {
+  try {
+    await setConfig(req.body);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to save config' });
+  }
 });
 
 app.post('/api/submit', async (req, res) => {
   // Use backend config if not provided in request
   let config = req.body.config;
-  if (!config) config = loadConfig();
+  if (!config) config = await getConfig();
   const { whomToMeet, appointment, purpose, selfie, childName, grade, contact, parentName, relationship, activeTab } = req.body;
 
   // Compose subject and message body based on form type
