@@ -9,6 +9,7 @@ const defaultConfig = {
 
 export default function AdminPanel({ config, setConfig, pageUrl }) {
   const [localConfig, setLocalConfig] = useState(() => ({ ...config }));
+  const [saveMsg, setSaveMsg] = useState("");
   const wifiQRRef = useRef(null);
   const pageQRRef = useRef(null);
 
@@ -81,10 +82,12 @@ export default function AdminPanel({ config, setConfig, pageUrl }) {
     }
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    setConfig(localConfig);
-    alert("Admin config saved!");
+    setSaveMsg("");
+    await setConfig(localConfig); // setConfig triggers backend save and reloads config in App
+    setSaveMsg("Saved successfully!");
+    setTimeout(() => setSaveMsg(""), 2000);
   };
 
   // QR code values
@@ -281,6 +284,7 @@ export default function AdminPanel({ config, setConfig, pageUrl }) {
           </>
         )}
       </div>
+      {saveMsg && <div style={{ color: '#1976d2', fontWeight: 600, marginBottom: 8 }}>{saveMsg}</div>}
       <button
         type="submit"
         style={{
