@@ -17,18 +17,19 @@ const MONGODB_URI = process.env.MONGODB_URI;
 const DB_NAME = 'visiskool';
 const COLLECTION = 'adminConfig';
 const client = new MongoClient(MONGODB_URI, { useUnifiedTopology: true });
+const CONFIG_ID = 'singleton'; // Use a constant id for the config
 
 async function getConfig() {
   await client.connect();
   const db = client.db(DB_NAME);
-  const config = await db.collection(COLLECTION).findOne({});
+  const config = await db.collection(COLLECTION).findOne({ _id: CONFIG_ID });
   return config || {};
 }
 async function setConfig(newConfig) {
   await client.connect();
   const db = client.db(DB_NAME);
-  await db.collection(COLLECTION).deleteMany({});
-  await db.collection(COLLECTION).insertOne(newConfig);
+  newConfig._id = CONFIG_ID;
+  await db.collection(COLLECTION).replaceOne({ _id: CONFIG_ID }, newConfig, { upsert: true });
 }
 
 const app = express();
