@@ -109,7 +109,7 @@ export default function AdminPanel({ config, setConfig, pageUrl }) {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
-      setConfig({ ...localConfig, logoUrl: ev.target.result });
+      setLocalConfig({ ...localConfig, logoUrl: ev.target.result });
     };
     reader.readAsDataURL(file);
   };
