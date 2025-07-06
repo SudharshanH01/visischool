@@ -14,10 +14,10 @@ const __dirname = path.dirname(__filename);
 
 // --- CONFIG STORAGE (MongoDB) ---
 const MONGODB_URI = process.env.MONGODB_URI;
-const DB_NAME = 'visiskool';
+const DB_NAME = 'visiskool'; // Ensure database name is visiskool
 const COLLECTION = 'adminConfig';
-const client = new MongoClient(MONGODB_URI, { useUnifiedTopology: true });
 const CONFIG_ID = 'singleton'; // Use a constant id for the config
+const client = new MongoClient(MONGODB_URI, { useUnifiedTopology: true });
 
 async function getConfig() {
   await client.connect();
@@ -30,6 +30,7 @@ async function setConfig(newConfig) {
   const db = client.db(DB_NAME);
   newConfig._id = CONFIG_ID;
   await db.collection(COLLECTION).replaceOne({ _id: CONFIG_ID }, newConfig, { upsert: true });
+  console.log('Config saved to MongoDB:', newConfig); // Add log for confirmation
 }
 
 const app = express();
