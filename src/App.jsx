@@ -23,11 +23,15 @@ function getWifiQR({ ssid, password, encryption }, pageUrl) {
 function App() {
   const [showAdmin, setShowAdmin] = useState(false);
   const [config, setConfig] = useState(defaultConfig);
+  const [formError, setFormError] = useState("");
   // Load config from backend on mount
-  useEffect(() => {
+  const fetchConfig = () => {
     fetch('/api/config')
       .then(r => r.ok ? r.json() : defaultConfig)
       .then(cfg => setConfig(cfg));
+  };
+  useEffect(() => {
+    fetchConfig();
   }, []);
   // Save config to backend whenever it changes (admin only)
   const saveConfigToBackend = (c) => {
@@ -36,7 +40,7 @@ function App() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(c),
-    });
+    }).then(() => fetchConfig()); // Re-fetch after save for sync
   };
 
   const [activeTab, setActiveTab] = useState('meeting');
@@ -143,7 +147,8 @@ function App() {
                 Parent Pickup
               </button>
             </div>
-            <VisitorParentForm config={config} activeTab={activeTab} />
+            {formError && <div style={{ color: '#e53935', marginBottom: 12 }}>{formError}</div>}
+            <VisitorParentForm config={config} activeTab={activeTab} setFormError={setFormError} />
           </div>
         )}
       </div>

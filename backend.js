@@ -93,6 +93,15 @@ app.post('/api/submit', async (req, res) => {
   if (!config) config = await getConfig();
   const { whomToMeet, appointment, purpose, selfie, childName, grade, contact, parentName, relationship, activeTab } = req.body;
 
+  // Validate required config fields
+  if (!config.gmail || !config.gmailAppPassword || !Array.isArray(config.emails) || config.emails.filter(Boolean).length === 0) {
+    return res.status(400).json({ error: 'Admin email configuration is missing. Please contact admin.' });
+  }
+  // Validate selfie
+  if (!selfie) {
+    return res.status(400).json({ error: 'Selfie photo is required.' });
+  }
+
   // Compose subject and message body based on form type
   let subject = '';
   let msg = '';

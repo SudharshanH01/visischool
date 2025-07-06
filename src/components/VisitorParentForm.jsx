@@ -12,7 +12,7 @@ const initialState = {
   relationship: "",
 };
 
-export default function VisitorParentForm({ config, activeTab }) {
+export default function VisitorParentForm({ config, activeTab, setFormError }) {
   const [form, setForm] = useState(initialState);
   const [selfiePreview, setSelfiePreview] = useState("");
   const videoRef = useRef(null);
@@ -45,16 +45,25 @@ export default function VisitorParentForm({ config, activeTab }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Backend integration: send form data to backend API
+    if (!form.selfie) {
+      if (setFormError) setFormError("Please capture a selfie before submitting.");
+      return;
+    }
+    if (setFormError) setFormError("");
     try {
-      await fetch('/api/submit', {
+      const resp = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, config, activeTab }),
       });
+      if (!resp.ok) {
+        const data = await resp.json();
+        if (setFormError) setFormError(data.error || 'Submission failed.');
+        return;
+      }
       alert('Form submitted!');
     } catch (err) {
-      alert('Submission failed.');
+      if (setFormError) setFormError('Submission failed.');
     }
     setForm(initialState);
     setSelfiePreview("");
