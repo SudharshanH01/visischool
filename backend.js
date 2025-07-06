@@ -75,6 +75,7 @@ app.get('/api/config', async (req, res) => {
     if (config) return res.json(config);
     res.status(404).json({ error: 'No config found' });
   } catch (err) {
+    console.error('GET /api/config error:', err); // Log error for debugging
     res.status(500).json({ error: 'Failed to load config' });
   }
 });
@@ -83,6 +84,7 @@ app.post('/api/config', async (req, res) => {
     await setConfig(req.body);
     res.json({ ok: true });
   } catch (err) {
+    console.error('POST /api/config error:', err); // Log error for debugging
     res.status(500).json({ error: 'Failed to save config' });
   }
 });
